@@ -9,8 +9,10 @@
 
 #define INPUT_LENGTH 100
 #define DEFAULT_CWD "~"
-#define PATH_ENV_VAR "PATH"
 #define SHELL_NAME "2sh"
+
+#define PATH_ENV_VAR "PATH"
+#define PATH_SPLIT_CHAR ":"
 
 int
 runArgsCommand(char *command)
@@ -30,8 +32,14 @@ runShell()
 	bufferline(DEFAULT_CWD);
 
 	char *pathEnv = getenv(PATH_ENV_VAR);
-	char *splitPaths = strtok(pathEnv, ":");
-	int pathsLength = sizeof(splitPaths);
+
+	char *splitPaths[500] = {0};
+	size_t pathsCount = 0;
+	static size_t const max_token_count = sizeof(splitPaths) / sizeof(splitPaths[0]);
+	for (char* path = strtok(pathEnv, PATH_SPLIT_CHAR); path != NULL && pathsCount != max_token_count; path = strtok(NULL, PATH_SPLIT_CHAR))
+	{
+	    splitPaths[pathsCount++] = path;
+	}
 
 	char current_dir[100] = DEFAULT_CWD;
 	char input[INPUT_LENGTH];
@@ -53,21 +61,28 @@ runShell()
 			exitShell();
 		}
 
-		while (splitPaths != NULL) {
-			strcat(splitPaths, command);
-			if (access(splitPaths, F_OK) == 0) {
-				printf("%s\n", splitPaths);
-				int status = system(splitPaths);
+		bool foundCommand = false;
+		for (int i = 0; i < pathsCount; i++)
+		{
+			char queriedPath[500] = {};
+			strcat(queriedPath, splitPaths[i]);
+			strcat(queriedPath, command);
+
+			if (access(queriedPath, F_OK) == 0) {
+				int status = system(queriedPath);
 				if (status != 0) {
 					printError(command, "Thrown error");
-					break;
 				}
-			}
 
-			splitPaths = strtok(NULL, ";");
+				foundCommand = true;
+				break;
+			}
 		}
 
-		printCommandNotFoundError(command);
+		if (!foundCommand) {
+			printCommandNotFoundError(command);
+		}
+
 		bufferline(current_dir);
 	}
 }
