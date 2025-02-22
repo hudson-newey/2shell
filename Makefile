@@ -3,13 +3,16 @@ SOURCE_DIR = "src"
 
 build:
 	mkdir -p $(BUILD_DIR)
-	gcc $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/main
+	gcc $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/2sh
 
 build-prod:
 	mkdir -p $(BUILD_DIR)
-	gcc $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/main -O3
+	gcc $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/2sh -O3
+
+install:
+	scripts/install-artifacts.sh $(BUILD_DIR)
 
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: clean build build-prod
+.PHONY: clean build build-prod install
