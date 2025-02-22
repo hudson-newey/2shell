@@ -19,6 +19,9 @@
             "yzhang.markdown-all-in-one",
             "davidanson.vscode-markdownlint",
             "pkief.material-icon-theme",
+
+            "ms-vscode.cpptools-extension-pack",
+            "ms-vscode.makefile-tools"
         ]
     }
 }
