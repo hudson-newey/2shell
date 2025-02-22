@@ -12,7 +12,17 @@
 #define SHELL_NAME "2sh"
 
 int
-run_shell()
+runShellCommand(char *command)
+{
+	if (strncmp(command, "exit", INPUT_LENGTH) == 0) {
+		exitShell();
+	}
+
+	printCommandNotFoundError(command);
+}
+
+int
+runShell()
 {
 	// before we even initialize the shell, I print an inital prompt so that it
 	// appears to start up faster
@@ -36,12 +46,8 @@ run_shell()
 		input[strcspn(input, "\n")] = 0;
 
 		char *command = strtok(input, " ");
+		runShellCommand(command);
 
-		if (strncmp(command, "exit", INPUT_LENGTH) == 0) {
-			exit_shell();
-		}
-
-		printCommandNotFoundError(command);
 		bufferline(current_dir);
 	}
 }

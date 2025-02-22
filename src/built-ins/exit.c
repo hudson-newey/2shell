@@ -3,7 +3,7 @@
 #define DEFAULT_EXIT_CODE 0
 
 void
-exit_shell()
+exitShell()
 {
     exit(DEFAULT_EXIT_CODE);
 }
