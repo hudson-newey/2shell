@@ -81,6 +81,11 @@ runShell()
 		} else if (!strncmp(command, "cd", INPUT_LEN)) {
 			if (argCount >= 2) {
 				strncpy(currentDir, commandArgs[1], DIR_LEN);
+
+				// using the chdir() function communicates to
+				// programs like "ls" and "pwd" what directory
+				// we are currently looking at
+				chdir(currentDir);
 			}
 
 			bufferline(currentDir, currentUser);
