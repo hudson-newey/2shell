@@ -29,6 +29,8 @@ runArgsCommand(char *command)
 	}
 
 	printCommandNotFoundError(command);
+
+	return 0;
 }
 
 int
@@ -95,6 +97,7 @@ runShell()
 		char localQueryPath[DIR_LEN];
 		strncpy(localQueryPath, currentDir, DIR_LEN);
 		strncat(localQueryPath, command, DIR_LEN);
+		char *expandeddLocalPath = expandPath(localQueryPath, currentUser);
 
 		if (!access(localQueryPath, F_OK)) {
 			int status = system(localQueryPath);
@@ -107,8 +110,8 @@ runShell()
 			for (int i = 0; i < pathsCount; i++)
 			{
 				char queriedPath[500] = {};
-				strcat(queriedPath, splitPaths[i]);
-				strcat(queriedPath, command);
+				strncpy(queriedPath, expandPath(splitPaths[i], currentUser), DIR_LEN);
+				strncat(queriedPath, command, DIR_LEN);
 
 				if (access(queriedPath, F_OK) == 0) {
 					int status = system(queriedPath);
