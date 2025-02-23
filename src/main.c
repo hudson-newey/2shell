@@ -1,4 +1,4 @@
-#include "./shell.c"
+#include "shell/shell.c"
 
 int
 main(int argc, char *argv[])

@@ -5,7 +5,7 @@
 
 #include "errors.c"
 #include "bufferline.c"
-#include "built-ins/exit.c"
+#include "../built-ins/exit.c"
 
 #define INPUT_LEN 128
 #define DIR_LEN 128
