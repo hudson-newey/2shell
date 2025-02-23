@@ -1,7 +1,9 @@
 #include <stdio.h>
 
+#include "paths.c"
+
 void
-bufferline(char *currentDir)
+bufferline(char *currentDir, char *currentUser)
 {
-	printf("%s $ ", currentDir);
+	printf("%s $ ", shortenPath(currentDir, currentUser));
 }

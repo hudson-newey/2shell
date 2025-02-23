@@ -14,6 +14,8 @@
 #define PATH_ENV_VAR "PATH"
 #define PATH_SPLIT_CHAR ":"
 
+#define USER_ENV_VAR "USER"
+
 int
 runArgsCommand(char *command)
 {
@@ -29,19 +31,20 @@ runShell()
 {
 	// before we even initialize the shell, I print an inital prompt so that it
 	// appears to start up faster
-	bufferline(DEFAULT_CWD);
+	bufferline(DEFAULT_CWD, "");
 
 	char *pathEnv = getenv(PATH_ENV_VAR);
+	char *currentUser = getenv(USER_ENV_VAR);
 
 	char *splitPaths[500] = {0};
 	size_t pathsCount = 0;
-	static size_t const max_token_count = sizeof(splitPaths) / sizeof(splitPaths[0]);
-	for (char* path = strtok(pathEnv, PATH_SPLIT_CHAR); path != NULL && pathsCount != max_token_count; path = strtok(NULL, PATH_SPLIT_CHAR))
+	static size_t const maxTokenCount = sizeof(splitPaths) / sizeof(splitPaths[0]);
+	for (char* path = strtok(pathEnv, PATH_SPLIT_CHAR); path != NULL && pathsCount != maxTokenCount; path = strtok(NULL, PATH_SPLIT_CHAR))
 	{
 	    splitPaths[pathsCount++] = path;
 	}
 
-	char current_dir[100] = DEFAULT_CWD;
+	char currentDir[100] = DEFAULT_CWD;
 	char input[INPUT_LENGTH];
 
 	while (true)
@@ -49,7 +52,7 @@ runShell()
 		char input[256];
 		fgets(input, INPUT_LENGTH, stdin);
 		if (strcmp(input, "\n") == 0) {
-			bufferline(current_dir);
+			bufferline(currentDir, currentUser);
 			continue;
 		}
 
@@ -83,6 +86,6 @@ runShell()
 			printCommandNotFoundError(command);
 		}
 
-		bufferline(current_dir);
+		bufferline(currentDir, currentUser);
 	}
 }
