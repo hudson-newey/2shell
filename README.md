@@ -11,6 +11,6 @@ A command line shell focused on speed.
 ## Why 2sh is better
 
 - cold start time to interactivity is significantly faster
-- 2sh is multi-threaded [TODO]
-- 2sh caches executable locations in a hash map, meaning that executable location lookups are an `O(1)` operation instead of `O(n)` (does not occur when using command line argument invokation, because creating a hash map would slow down execution in this use case) [TODO]
-- no scripting language nonsense (improving performance). 2sh is a command line shell, and should not be used in scripting contexts [TODO]
+- 2sh is multi-threaded
+- 2sh caches executable locations in a hash map, meaning that executable location lookups are an `O(1)` operation instead of `O(n)` (does not occur when using command line argument invokation, because creating a hash map would slow down execution in this use case)
+- no scripting language nonsense (improving performance). 2sh is a command line shell, and should not be used in scripting contexts
