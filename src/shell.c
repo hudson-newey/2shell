@@ -72,6 +72,7 @@ runShell()
 		}
 
 		char *command = commandArgs[0];
+		bool foundCommand = false;
 
 		if (!strncmp(command, "exit", INPUT_LEN)) {
 			exitShell();
@@ -79,23 +80,45 @@ runShell()
 			if (argCount >= 2) {
 				strncpy(currentDir, commandArgs[1], DIR_LEN);
 			}
+
+			bufferline(currentDir, currentUser);
+			continue;
 		}
 
-		bool foundCommand = false;
-		for (int i = 0; i < pathsCount; i++)
-		{
-			char queriedPath[500] = {};
-			strcat(queriedPath, splitPaths[i]);
-			strcat(queriedPath, command);
+		// I think that the local path is the most likely to contain
+		// the requested exectable.
+		// Therefore, I perform the O(n) operation for the local path
+		// query first.
+		//
+		// TODO: This ordering should probably be conditional on if
+		// the command starts with a ./
+		char localQueryPath[DIR_LEN];
+		strncpy(localQueryPath, currentDir, DIR_LEN);
+		strncat(localQueryPath, command, DIR_LEN);
 
-			if (access(queriedPath, F_OK) == 0) {
-				int status = system(queriedPath);
-				if (status != 0) {
-					printError(command, "Thrown error");
+		if (!access(localQueryPath, F_OK)) {
+			int status = system(localQueryPath);
+			if (status != 0) {
+				printError(command, "Thrown error");
+			}
+
+			foundCommand = true;
+		} else {
+			for (int i = 0; i < pathsCount; i++)
+			{
+				char queriedPath[500] = {};
+				strcat(queriedPath, splitPaths[i]);
+				strcat(queriedPath, command);
+
+				if (access(queriedPath, F_OK) == 0) {
+					int status = system(queriedPath);
+					if (status != 0) {
+						printError(command, "Thrown error");
+					}
+
+					foundCommand = true;
+					break;
 				}
-
-				foundCommand = true;
-				break;
 			}
 		}
 
