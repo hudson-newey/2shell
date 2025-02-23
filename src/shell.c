@@ -7,7 +7,12 @@
 #include "bufferline.c"
 #include "built-ins/exit.c"
 
-#define INPUT_LENGTH 100
+#define INPUT_LEN 128
+#define DIR_LEN 128
+#define ARG_LEN 128
+
+#define CMD_SEPARATOR " "
+
 #define DEFAULT_CWD "~"
 #define SHELL_NAME "2sh"
 
@@ -19,7 +24,7 @@
 int
 runArgsCommand(char *command)
 {
-	if (strncmp(command, "exit", INPUT_LENGTH) == 0) {
+	if (strncmp(command, "exit", INPUT_LEN) == 0) {
 		exitShell();
 	}
 
@@ -44,13 +49,13 @@ runShell()
 	    splitPaths[pathsCount++] = path;
 	}
 
-	char currentDir[100] = DEFAULT_CWD;
-	char input[INPUT_LENGTH];
+	char currentDir[DIR_LEN] = DEFAULT_CWD;
+	char input[INPUT_LEN];
 
 	while (true)
 	{
 		char input[256];
-		fgets(input, INPUT_LENGTH, stdin);
+		fgets(input, INPUT_LEN, stdin);
 		if (strcmp(input, "\n") == 0) {
 			bufferline(currentDir, currentUser);
 			continue;
@@ -58,10 +63,22 @@ runShell()
 
 		input[strcspn(input, "\n")] = 0;
 
-		char *command = strtok(input, " ");
+		char *commandArgs[ARG_LEN] = {0};
+		size_t argCount = 0;
+		static size_t const maxCommandTokenCount = sizeof(commandArgs) / sizeof(commandArgs[0]);
+		for (char* arg = strtok(input, CMD_SEPARATOR); arg != NULL && argCount != maxCommandTokenCount; arg = strtok(NULL, CMD_SEPARATOR))
+		{
+		    commandArgs[argCount++] = arg;
+		}
 
-		if (strncmp(command, "exit", INPUT_LENGTH) == 0) {
+		char *command = commandArgs[0];
+
+		if (!strncmp(command, "exit", INPUT_LEN)) {
 			exitShell();
+		} else if (!strncmp(command, "cd", INPUT_LEN)) {
+			if (argCount >= 2) {
+				strncpy(currentDir, commandArgs[1], DIR_LEN);
+			}
 		}
 
 		bool foundCommand = false;
