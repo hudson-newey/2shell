@@ -45,6 +45,12 @@ runShell()
 	char *pathEnv = getenv(PATH_ENV_VAR);
 	char *currentUser = getenv(USER_ENV_VAR);
 
+	char initialDir[DIR_LEN];
+	strncpy(initialDir, "/home/", DIR_LEN);
+	strncat(initialDir, currentUser, DIR_LEN);
+	strncat(initialDir, "/", DIR_LEN);
+	cdShell(initialDir);
+
 	char *splitPaths[500] = {0};
 	size_t pathsCount = 0;
 	static size_t const maxTokenCount = sizeof(splitPaths) / sizeof(splitPaths[0]);
@@ -87,7 +93,7 @@ runShell()
 				// using the chdir() function communicates to
 				// programs like "ls" and "pwd" what directory
 				// we are currently looking at
-				chdir(currentDir);
+				cdShell(currentDir);
 
 				char *newPathValue = getenv("PWD");
 				getcwd(currentDir, DIR_LEN);
