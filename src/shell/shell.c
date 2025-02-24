@@ -113,7 +113,7 @@ runShell()
 		char localQueryPath[DIR_LEN];
 		strncpy(localQueryPath, currentDir, DIR_LEN);
 		strncat(localQueryPath, command, DIR_LEN);
-		char *expandeddLocalPath = expandPath(localQueryPath, currentUser);
+		char *expandeddLocalPath = expandPath(localQueryPath, currentUser, false);
 
 		if (!access(localQueryPath, F_OK)) {
 			int status = system(localQueryPath);
@@ -126,7 +126,7 @@ runShell()
 			for (int i = 0; i < pathsCount; i++)
 			{
 				char queriedPath[500] = {};
-				strncpy(queriedPath, expandPath(splitPaths[i], currentUser), DIR_LEN);
+				strncpy(queriedPath, expandPath(splitPaths[i], currentUser, true), DIR_LEN);
 				strncat(queriedPath, command, DIR_LEN);
 
 				if (access(queriedPath, F_OK) == 0) {

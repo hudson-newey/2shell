@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 // copied from https://stackoverflow.com/a/31775567
 // TODO: replace this with a correct custom implementation
@@ -38,12 +39,12 @@ strReplace(char *line, const char *search, const char *replace)
 }
 
 char*
-expandPath(char *path, char *currentUser)
+expandPath(char *path, char *currentUser, bool suffixSlash)
 {
 	size_t pathLen = strlen(path);
 	char lastPathChar = path[pathLen - 1];
 
-	if (lastPathChar != '/') {
+	if (suffixSlash && lastPathChar != '/') {
 		strcat(path, "/");
 	}
 
