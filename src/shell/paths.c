@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // copied from https://stackoverflow.com/a/31775567
-// TOOD: replace this with a correct custom implementation
+// TODO: replace this with a correct custom implementation
 /* returns number of strings replaced */
 int
 strReplace(char *line, const char *search, const char *replace)
@@ -61,6 +61,12 @@ shortenPath(char *path, char *currentUser)
 {
 	char homePath[128] = "/home/";
 	strncat(homePath, currentUser, 128);
+
+	// TODO: remove this special case
+	if (!strncmp(homePath, path, 128)) {
+		return "~";
+	}
+
 	strncat(homePath, "/", 128);
 
 	strReplace(path, homePath, "~/");

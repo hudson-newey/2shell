@@ -5,5 +5,5 @@
 void
 bufferline(char *currentDir, char *currentUser)
 {
-	printf("%s$ ", shortenPath(currentDir, currentUser));
+	printf("%s > ", shortenPath(currentDir, currentUser));
 }
