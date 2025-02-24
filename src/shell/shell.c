@@ -5,7 +5,9 @@
 
 #include "errors.c"
 #include "bufferline.c"
+
 #include "../built-ins/exit.c"
+#include "../built-ins/cd.c"
 
 #define INPUT_LEN 128
 #define DIR_LEN 128
@@ -86,6 +88,9 @@ runShell()
 				// programs like "ls" and "pwd" what directory
 				// we are currently looking at
 				chdir(currentDir);
+
+				char *newPathValue = getenv("PWD");
+				getcwd(currentDir, DIR_LEN);
 			}
 
 			bufferline(currentDir, currentUser);
