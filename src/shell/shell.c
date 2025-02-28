@@ -9,7 +9,7 @@
 #include "../built-ins/exit.c"
 #include "../built-ins/cd.c"
 
-#define INPUT_LEN 128
+#define INPUT_LEN 256
 #define DIR_LEN 128
 #define ARG_LEN 128
 
@@ -26,7 +26,8 @@
 int
 runArgsCommand(char *command)
 {
-	if (strncmp(command, "exit", INPUT_LEN) == 0) {
+	if (strncmp(command, "exit", INPUT_LEN) == 0)
+	{
 		exitShell();
 	}
 
@@ -64,31 +65,38 @@ runShell()
 
 	while (true)
 	{
-		char input[256];
+		char input[INPUT_LEN];
 		fgets(input, INPUT_LEN, stdin);
-		if (strcmp(input, "\n") == 0) {
+		if (strcmp(input, "\n") == 0)
+		{
 			bufferline(currentDir, currentUser);
 			continue;
 		}
 
 		input[strcspn(input, "\n")] = 0;
+		char unmodifiedInput[INPUT_LEN];
+		strncpy(unmodifiedInput, input, INPUT_LEN);
 
-		char *commandArgs[ARG_LEN] = {0};
+		char *userCommand[ARG_LEN] = {0};
 		size_t argCount = 0;
-		static size_t const maxCommandTokenCount = sizeof(commandArgs) / sizeof(commandArgs[0]);
+		static size_t const maxCommandTokenCount = sizeof(userCommand) / sizeof(userCommand[0]);
 		for (char* arg = strtok(input, CMD_SEPARATOR); arg != NULL && argCount != maxCommandTokenCount; arg = strtok(NULL, CMD_SEPARATOR))
 		{
-		    commandArgs[argCount++] = arg;
+			userCommand[argCount++] = arg;
 		}
 
-		char *command = commandArgs[0];
+		char *command = userCommand[0];
 		bool foundCommand = false;
 
-		if (!strncmp(command, "exit", INPUT_LEN)) {
+		if (!strncmp(command, "exit", INPUT_LEN))
+		{
 			exitShell();
-		} else if (!strncmp(command, "cd", INPUT_LEN)) {
-			if (argCount >= 2) {
-				strncpy(currentDir, commandArgs[1], DIR_LEN);
+		}
+		else if (!strncmp(command, "cd", INPUT_LEN))
+		{
+			if (argCount >= 2)
+			{
+				strncpy(currentDir, userCommand[1], DIR_LEN);
 
 				// using the chdir() function communicates to
 				// programs like "ls" and "pwd" what directory
@@ -113,25 +121,41 @@ runShell()
 		char localQueryPath[DIR_LEN];
 		strncpy(localQueryPath, currentDir, DIR_LEN);
 		strncat(localQueryPath, command, DIR_LEN);
-		char *expandeddLocalPath = expandPath(localQueryPath, currentUser, false);
 
-		if (!access(localQueryPath, F_OK)) {
-			int status = system(localQueryPath);
-			if (status != 0) {
+		char *expandedLocalPath = expandPath(localQueryPath, currentUser, false);
+
+		if (!access(localQueryPath, F_OK))
+		{
+			char executedCommand[INPUT_LEN];
+			strncpy(executedCommand, currentDir, INPUT_LEN);
+			strncpy(executedCommand, unmodifiedInput, INPUT_LEN);
+
+			int status =  system(executedCommand);
+			if (status != 0)
+			{
 				printError(command, "Thrown error");
 			}
 
 			foundCommand = true;
-		} else {
+		}
+		else
+		{
 			for (int i = 0; i < pathsCount; i++)
 			{
-				char queriedPath[500] = {};
-				strncpy(queriedPath, expandPath(splitPaths[i], currentUser, true), DIR_LEN);
+				char *expandedQueriedPath = expandPath(splitPaths[i], currentUser, true);
+				char queriedPath[DIR_LEN] = {};
+				strncpy(queriedPath, expandedQueriedPath, DIR_LEN);
 				strncat(queriedPath, command, DIR_LEN);
 
-				if (access(queriedPath, F_OK) == 0) {
-					int status = system(queriedPath);
-					if (status != 0) {
+				if (access(queriedPath, F_OK) == 0)
+				{
+					char executedCommand[INPUT_LEN];
+					strncpy(executedCommand, expandedQueriedPath, INPUT_LEN);
+					strncat(executedCommand, unmodifiedInput, INPUT_LEN);
+
+					int status = system(executedCommand);
+					if (status != 0)
+					{
 						printError(command, "Thrown error");
 					}
 
@@ -141,7 +165,8 @@ runShell()
 			}
 		}
 
-		if (!foundCommand) {
+		if (!foundCommand)
+		{
 			printCommandNotFoundError(command);
 		}
 

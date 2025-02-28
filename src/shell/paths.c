@@ -12,24 +12,36 @@ strReplace(char *line, const char *search, const char *replace)
 	char *sp; // start of pattern
 
 	//printf("replacestr(%s, %s, %s)\n", line, search, replace);
-	if ((sp = strstr(line, search)) == NULL) {
+	if ((sp = strstr(line, search)) == NULL)
+	{
 		return(0);
 	}
 	count = 1;
 	int sLen = strlen(search);
 	int rLen = strlen(replace);
-	if (sLen > rLen) {
+	if (sLen > rLen)
+	{
 		// move from right to left
 		char *src = sp + sLen;
 		char *dst = sp + rLen;
-		while((*dst = *src) != '\0') { dst++; src++; }
-	} else if (sLen < rLen) {
+		while((*dst = *src) != '\0')
+		{
+			dst++;
+			src++;
+		}
+	}
+	else if (sLen < rLen)
+	{
 		// move from left to right
 		int tLen = strlen(sp) - sLen;
 		char *stop = sp + rLen;
 		char *src = sp + sLen + tLen;
 		char *dst = sp + rLen + tLen;
-		while(dst >= stop) { *dst = *src; dst--; src--; }
+		while(dst >= stop)
+		{
+			*dst = *src;
+			dst--; src--;
+		}
 	}
 	memcpy(sp, replace, rLen);
 
@@ -44,7 +56,8 @@ expandPath(char *path, char *currentUser, bool suffixSlash)
 	size_t pathLen = strlen(path);
 	char lastPathChar = path[pathLen - 1];
 
-	if (suffixSlash && lastPathChar != '/') {
+	if (suffixSlash && lastPathChar != '/')
+	{
 		strcat(path, "/");
 	}
 
@@ -64,7 +77,8 @@ shortenPath(char *path, char *currentUser)
 	strncat(homePath, currentUser, 128);
 
 	// TODO: remove this special case
-	if (!strncmp(homePath, path, 128)) {
+	if (!strncmp(homePath, path, 128))
+	{
 		return "~";
 	}
 
