@@ -15,6 +15,7 @@ A command line shell focused on speed.
 
 # todo
 
+- Support pipes, tab completion, and readline shortcuts
 - 2sh is multi-threaded
 - 2sh caches executable locations in a hash map, meaning that executable location lookups are an `O(1)` operation instead of `O(n)` (does not occur when using command line argument invokation, because creating a hash map would slow down execution in this use case)
 - Commonly used applications are automatically loaded into RAMDISK, meaning that they are accessible from RAM, and do not have to go to disk
