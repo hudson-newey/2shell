@@ -71,31 +71,23 @@ runShell()
 	char currentDir[DIR_LEN] = DEFAULT_CWD;
 	char input[INPUT_LEN];
 
-	bool isFirstStartup = true;
 	bool lastCommandSuccess = true;
 
+	printf("\e[1;1H\e[2J");
 	while (true)
 	{
 		char bufferlinePrompt[INPUT_LEN];
-		if (isFirstStartup)
+		strncpy(bufferlinePrompt, "\x1b[36m", INPUT_LEN);
+		strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
+		strncat(bufferlinePrompt, "\x1b[0m", INPUT_LEN);
+
+		if (lastCommandSuccess)
 		{
-			strncpy(bufferlinePrompt, "", INPUT_LEN);
-			isFirstStartup = false;
+			strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), INPUT_LEN);
 		}
 		else
 		{
-			strncpy(bufferlinePrompt, "\x1b[36m", INPUT_LEN);
-			strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
-			strncat(bufferlinePrompt, "\x1b[0m", INPUT_LEN);
-
-			if (lastCommandSuccess)
-			{
-				strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), INPUT_LEN);
-			}
-			else
-			{
-				strncat(bufferlinePrompt, FAILURE_RED(" > "), INPUT_LEN);
-			}
+			strncat(bufferlinePrompt, FAILURE_RED(" > "), INPUT_LEN);
 		}
 
 		char *input = readline(bufferlinePrompt);
