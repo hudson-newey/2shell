@@ -138,6 +138,11 @@ runShell()
 			continue;
 		}
 
+		if (!strncmp(command, "ls", INPUT_LEN))
+		{
+			strncat(unmodifiedInput, " --color", INPUT_LEN);
+		}
+
 		// I think that the local path is the most likely to contain
 		// the requested exectable.
 		// Therefore, I perform the O(n) operation for the local path
