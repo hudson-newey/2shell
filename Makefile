@@ -5,11 +5,11 @@ SOURCE_DIR = "src"
 
 build:
 	mkdir -p $(BUILD_DIR)
-	$(CC) $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/2sh
+	$(CC) $(SOURCE_DIR)/main.c -lreadline -o $(BUILD_DIR)/2sh
 
 build-prod:
 	mkdir -p $(BUILD_DIR)
-	$(CC) $(SOURCE_DIR)/main.c -o $(BUILD_DIR)/2sh -O3
+	$(CC) $(SOURCE_DIR)/main.c -lreadline -o $(BUILD_DIR)/2sh -O3
 
 install:
 	scripts/install-artifacts.sh $(BUILD_DIR)

@@ -3,8 +3,12 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#include "paths.c"
 #include "errors.c"
-#include "bufferline.c"
 
 #include "../built-ins/exit.c"
 #include "../built-ins/cd.c"
@@ -41,7 +45,7 @@ runShell()
 {
 	// before we even initialize the shell, I print an inital prompt so that it
 	// appears to start up faster
-	bufferline(DEFAULT_CWD, "");
+	printf(" ~ > ");
 
 	char *pathEnv = getenv(PATH_ENV_VAR);
 	char *currentUser = getenv(USER_ENV_VAR);
@@ -63,13 +67,22 @@ runShell()
 	char currentDir[DIR_LEN] = DEFAULT_CWD;
 	char input[INPUT_LEN];
 
+	bool isFirstStartup = true;
+
 	while (true)
 	{
-		char input[INPUT_LEN];
-		fgets(input, INPUT_LEN, stdin);
+		char bufferlinePrompt[INPUT_LEN];
+		if (isFirstStartup) {
+			strncpy(bufferlinePrompt, "", INPUT_LEN);
+			isFirstStartup = false;
+		} else {
+			strncpy(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
+			strncat(bufferlinePrompt, " > ", INPUT_LEN);
+		}
+
+		char *input = readline(bufferlinePrompt);
 		if (strcmp(input, "\n") == 0)
 		{
-			bufferline(currentDir, currentUser);
 			continue;
 		}
 
@@ -88,7 +101,7 @@ runShell()
 		char *command = userCommand[0];
 		bool foundCommand = false;
 
-		if (!strncmp(command, "exit", INPUT_LEN))
+		if (!strncmp(command, "exit", INPUT_LEN) || !strncmp(command, "q", INPUT_LEN))
 		{
 			exitShell();
 		}
@@ -107,7 +120,6 @@ runShell()
 				getcwd(currentDir, DIR_LEN);
 			}
 
-			bufferline(currentDir, currentUser);
 			continue;
 		}
 
@@ -169,7 +181,5 @@ runShell()
 		{
 			printCommandNotFoundError(command);
 		}
-
-		bufferline(currentDir, currentUser);
 	}
 }
