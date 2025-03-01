@@ -27,6 +27,10 @@
 
 #define USER_ENV_VAR "USER"
 
+#define COLOR_RESET "\x1b[0m"
+#define FAILURE_RED(string) "\x1b[31m" string COLOR_RESET
+#define SUCCESS_GREEN(string) "\x1b[32m" string COLOR_RESET
+
 int
 runArgsCommand(char *command)
 {
@@ -45,7 +49,7 @@ runShell()
 {
 	// before we even initialize the shell, I print an inital prompt so that it
 	// appears to start up faster
-	printf("~ > ");
+	printf("\x1b[36m~\x1b[32m > \x1b[0m");
 
 	char *pathEnv = getenv(PATH_ENV_VAR);
 	char *currentUser = getenv(USER_ENV_VAR);
@@ -68,16 +72,30 @@ runShell()
 	char input[INPUT_LEN];
 
 	bool isFirstStartup = true;
+	bool lastCommandSuccess = true;
 
 	while (true)
 	{
 		char bufferlinePrompt[INPUT_LEN];
-		if (isFirstStartup) {
+		if (isFirstStartup)
+		{
 			strncpy(bufferlinePrompt, "", INPUT_LEN);
 			isFirstStartup = false;
-		} else {
-			strncpy(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
-			strncat(bufferlinePrompt, " > ", INPUT_LEN);
+		}
+		else
+		{
+			strncpy(bufferlinePrompt, "\x1b[36m", INPUT_LEN);
+			strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
+			strncat(bufferlinePrompt, "\x1b[0m", INPUT_LEN);
+
+			if (lastCommandSuccess)
+			{
+				strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), INPUT_LEN);
+			}
+			else
+			{
+				strncat(bufferlinePrompt, FAILURE_RED(" > "), INPUT_LEN);
+			}
 		}
 
 		char *input = readline(bufferlinePrompt);
@@ -114,10 +132,15 @@ runShell()
 				// using the chdir() function communicates to
 				// programs like "ls" and "pwd" what directory
 				// we are currently looking at
-				cdShell(currentDir);
+				int respCode = cdShell(currentDir);
+				lastCommandSuccess = !respCode;
 
 				char *newPathValue = getenv("PWD");
 				getcwd(currentDir, DIR_LEN);
+			}
+			else
+			{
+				lastCommandSuccess = false;
 			}
 
 			continue;
@@ -138,6 +161,8 @@ runShell()
 
 		if (!access(localQueryPath, F_OK))
 		{
+			lastCommandSuccess = true;
+
 			char executedCommand[INPUT_LEN];
 			strncpy(executedCommand, currentDir, INPUT_LEN);
 			strncpy(executedCommand, unmodifiedInput, INPUT_LEN);
@@ -146,6 +171,7 @@ runShell()
 			if (status != 0)
 			{
 				printError(command, "Thrown error");
+				lastCommandSuccess = false;
 			}
 
 			foundCommand = true;
@@ -161,6 +187,8 @@ runShell()
 
 				if (access(queriedPath, F_OK) == 0)
 				{
+					lastCommandSuccess = true;
+
 					char executedCommand[INPUT_LEN];
 					strncpy(executedCommand, expandedQueriedPath, INPUT_LEN);
 					strncat(executedCommand, unmodifiedInput, INPUT_LEN);
@@ -169,6 +197,7 @@ runShell()
 					if (status != 0)
 					{
 						printError(command, "Thrown error");
+						lastCommandSuccess = false;
 					}
 
 					foundCommand = true;
@@ -180,6 +209,7 @@ runShell()
 		if (!foundCommand)
 		{
 			printCommandNotFoundError(command);
+			lastCommandSuccess = false;
 		}
 	}
 }

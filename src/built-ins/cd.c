@@ -1,7 +1,7 @@
 #include <unistd.h>
 
-void
+int
 cdShell(char *path)
 {
-    chdir(path);
+    return chdir(path);
 }
