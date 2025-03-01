@@ -45,7 +45,7 @@ runShell()
 {
 	// before we even initialize the shell, I print an inital prompt so that it
 	// appears to start up faster
-	printf(" ~ > ");
+	printf("~ > ");
 
 	char *pathEnv = getenv(PATH_ENV_VAR);
 	char *currentUser = getenv(USER_ENV_VAR);
@@ -81,7 +81,7 @@ runShell()
 		}
 
 		char *input = readline(bufferlinePrompt);
-		if (strcmp(input, "\n") == 0)
+		if (!strcmp(input, ""))
 		{
 			continue;
 		}
