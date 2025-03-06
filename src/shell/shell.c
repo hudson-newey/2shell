@@ -148,6 +148,10 @@ runShell()
 		{
 			strncat(modifiedInput, " --color", INPUT_LEN);
 		}
+		else if (!strncmp(command, "grep", INPUT_LEN))
+		{
+			strncat(modifiedInput, " --color", INPUT_LEN);
+		}
 
 		// I think that the local path is the most likely to contain
 		// the requested exectable.
