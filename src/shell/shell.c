@@ -100,6 +100,12 @@ runShell()
 		char unmodifiedInput[INPUT_LEN];
 		strncpy(unmodifiedInput, input, INPUT_LEN);
 
+		// this modified input is used to have inbuilt aliases
+		// e.g. ls is mapped to ls --color
+		// these inbuilt mappings are typically just visual
+		char modifiedInput[INPUT_LEN];
+		strncpy(modifiedInput, input, INPUT_LEN);
+
 		char *userCommand[ARG_LEN] = {0};
 		size_t argCount = 0;
 		static size_t const maxCommandTokenCount = sizeof(userCommand) / sizeof(userCommand[0]);
@@ -140,7 +146,7 @@ runShell()
 
 		if (!strncmp(command, "ls", INPUT_LEN))
 		{
-			strncat(unmodifiedInput, " --color", INPUT_LEN);
+			strncat(modifiedInput, " --color", INPUT_LEN);
 		}
 
 		// I think that the local path is the most likely to contain
@@ -162,7 +168,7 @@ runShell()
 
 			char executedCommand[INPUT_LEN];
 			strncpy(executedCommand, currentDir, INPUT_LEN);
-			strncpy(executedCommand, unmodifiedInput, INPUT_LEN);
+			strncpy(executedCommand, modifiedInput, INPUT_LEN);
 
 			int status =  system(executedCommand);
 			if (status != 0)
@@ -188,7 +194,7 @@ runShell()
 
 					char executedCommand[INPUT_LEN];
 					strncpy(executedCommand, expandedQueriedPath, INPUT_LEN);
-					strncat(executedCommand, unmodifiedInput, INPUT_LEN);
+					strncat(executedCommand, modifiedInput, INPUT_LEN);
 
 					int status = system(executedCommand);
 					if (status != 0)
@@ -202,6 +208,8 @@ runShell()
 				}
 			}
 		}
+
+		add_history(unmodifiedInput);
 
 		if (!foundCommand)
 		{
