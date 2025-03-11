@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <stdio.h>
 #include <readline/readline.h>
@@ -31,6 +32,14 @@
 #define FAILURE_RED(string) "\x1b[31m" string COLOR_RESET
 #define SUCCESS_GREEN(string) "\x1b[32m" string COLOR_RESET
 
+// this is a signal handler that does nothing
+// it is used to prevent the shell from exiting
+// when the user presses ctrl+c in the interactive terminal
+void
+intHandler(int dummy)
+{
+}
+
 int
 runArgsCommand(char *command)
 {
@@ -51,7 +60,10 @@ runShell()
 	// appears to start up faster
 	printf("\x1b[36m~\x1b[32m > \x1b[0m");
 
+	signal(SIGINT, intHandler);
+
 	char *pathEnv = getenv(PATH_ENV_VAR);
+	setenv("PATH", pathEnv, true);
 	char *currentUser = getenv(USER_ENV_VAR);
 
 	char initialDir[DIR_LEN];
@@ -132,6 +144,14 @@ runShell()
 				// we are currently looking at
 				int respCode = cdShell(currentDir);
 				lastCommandSuccess = !respCode;
+
+				if (respCode == -1)
+				{
+					char errorMsg[256];
+					strncpy(errorMsg, userCommand[1], 256);
+					strncat(errorMsg, ": No such file or directory", 256);
+					printError("cd", errorMsg);
+				}
 
 				char *newPathValue = getenv("PWD");
 				getcwd(currentDir, DIR_LEN);

@@ -1,17 +1,18 @@
 CC = "gcc"
 
-BUILD_DIR = "build"
+BUILD_DIR = "./build"
 SOURCE_DIR = "src"
 
 build:
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(SOURCE_DIR)/main.c -lreadline -o $(BUILD_DIR)/2sh
+	export CC=$(CC)
+	cmake -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build ./build
 
-build-prod:
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(SOURCE_DIR)/main.c -lreadline -o $(BUILD_DIR)/2sh -O3
-
+# do a prod build first then run the install scripts
 install:
+	export CC=$(CC)
+	cmake -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build ./build
 	scripts/install-artifacts.sh $(BUILD_DIR)
 
 clean:
