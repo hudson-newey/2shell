@@ -161,6 +161,16 @@ runShell()
 				lastCommandSuccess = false;
 			}
 
+			// Because we short-circut the cd command so that we
+			// don't end up searching PATH, we do not hit the
+			// condition to add_history after the PATH command
+			// was executed.
+			//
+			// I didn't want to de-duplicate code by adding to the
+			// history before the command was executed so that the
+			// command the user requested is executed as soon as
+			// possible.
+			add_history(unmodifiedInput);
 			continue;
 		}
 
@@ -233,6 +243,10 @@ runShell()
 			}
 		}
 
+		// we could add_history first, to de-duplicate logic
+		// however, I wanted to execute the command that the user
+		// requested as fast as possible, so that there is feedback to
+		// provide to the user as soon as they press the enter key
 		add_history(unmodifiedInput);
 
 		if (!foundCommand)
