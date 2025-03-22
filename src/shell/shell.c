@@ -32,12 +32,17 @@
 #define FAILURE_RED(string) "\x1b[31m" string COLOR_RESET
 #define SUCCESS_GREEN(string) "\x1b[32m" string COLOR_RESET
 
+static volatile int sigint_received = 0;
+
 // this is a signal handler that does nothing
 // it is used to prevent the shell from exiting
 // when the user presses ctrl+c in the interactive terminal
 void
 intHandler(int dummy)
 {
+	sigint_received = 1;
+	rl_replace_line("", 0);
+	rl_refresh_line(0, 0);
 }
 
 int
