@@ -135,31 +135,33 @@ runShell()
 		}
 		else if (!strncmp(command, "cd", INPUT_LEN))
 		{
-			if (argCount >= 2)
-			{
-				strncpy(currentDir, userCommand[1], DIR_LEN);
-
-				// using the chdir() function communicates to
-				// programs like "ls" and "pwd" what directory
-				// we are currently looking at
-				int respCode = cdShell(currentDir);
-				lastCommandSuccess = !respCode;
-
-				if (respCode == -1)
-				{
-					char errorMsg[256];
-					strncpy(errorMsg, userCommand[1], 256);
-					strncat(errorMsg, ": No such file or directory", 256);
-					printError("cd", errorMsg);
-				}
-
-				char *newPathValue = getenv("PWD");
-				getcwd(currentDir, DIR_LEN);
-			}
-			else
-			{
+			// for some reason, the bash behavior is to not throw
+			// an error if the cd command is run without a path
+			// I replicate this behavior in my shell
+			if (argCount < 2) {
+				add_history(unmodifiedInput);
 				lastCommandSuccess = false;
+				continue;
 			}
+
+			strncpy(currentDir, userCommand[1], DIR_LEN);
+
+			// using the chdir() function communicates to
+			// programs like "ls" and "pwd" what directory
+			// we are currently looking at
+			int respCode = cdShell(currentDir);
+			lastCommandSuccess = !respCode;
+
+			if (respCode == -1)
+			{
+				char errorMsg[256];
+				strncpy(errorMsg, userCommand[1], 256);
+				strncat(errorMsg, ": No such file or directory", 256);
+				printError("cd", errorMsg);
+			}
+
+			char *newPathValue = getenv("PWD");
+			getcwd(currentDir, DIR_LEN);
 
 			// Because we short-circut the cd command so that we
 			// don't end up searching PATH, we do not hit the
@@ -170,6 +172,28 @@ runShell()
 			// history before the command was executed so that the
 			// command the user requested is executed as soon as
 			// possible.
+			add_history(unmodifiedInput);
+			continue;
+		}
+		else if (!strncmp(command, "export", INPUT_LEN))
+		{
+			if (argCount < 3)
+			{
+				lastCommandSuccess = false;
+				add_history(unmodifiedInput);
+				continue;
+			}
+
+			// TODO: Check this can be inlined by the optimizer
+			// I have only assigned userCommand[1] and [2] to a
+			// variable so that the code reads better, and I
+			// assume that the compiler can optimize away this
+			// pointer allocation.
+			char *envVarName = userCommand[1];
+			char *envVarValue = userCommand[2];
+
+			setenv(envVarName, envVarValue, 1);
+
 			add_history(unmodifiedInput);
 			continue;
 		}
@@ -207,7 +231,10 @@ runShell()
 			int status =  system(executedCommand);
 			if (status != 0)
 			{
-				printError(command, "Thrown error");
+				char errorMessage[1028];
+				sprintf(errorMessage, "Thrown error (%d)", status);
+
+				printError(command, errorMessage);
 				lastCommandSuccess = false;
 			}
 
