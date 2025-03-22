@@ -232,13 +232,14 @@ runShell()
 			if (status != 0)
 			{
 				char errorMessage[1028];
-				sprintf(errorMessage, "Thrown error (%d)", status);
+				snprintf(errorMessage, sizeof(errorMessage), "Thrown error (%d)", status);
 
 				printError(command, errorMessage);
 				lastCommandSuccess = false;
 			}
 
 			foundCommand = true;
+			break;
 		}
 		else
 		{
@@ -260,7 +261,10 @@ runShell()
 					int status = system(executedCommand);
 					if (status != 0)
 					{
-						printError(command, "Thrown error");
+						char errorMessage[1028];
+						snprintf(errorMessage, sizeof(errorMessage), "Thrown error (%d)", status);
+
+						printError(command, errorMessage);
 						lastCommandSuccess = false;
 					}
 
@@ -282,4 +286,6 @@ runShell()
 			lastCommandSuccess = false;
 		}
 	}
+
+	return 0;
 }
