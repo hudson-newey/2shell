@@ -50,7 +50,7 @@ strReplace(char *line, const char *search, const char *replace)
 	return(count);
 }
 
-char*
+void
 expandPath(char *path, char *currentUser, bool suffixSlash)
 {
 	size_t pathLen = strlen(path);
@@ -66,8 +66,6 @@ expandPath(char *path, char *currentUser, bool suffixSlash)
 	strncat(homePath, "/", 128);
 
 	strReplace(path, "~/", homePath);
-
-	return path;
 }
 
 char*

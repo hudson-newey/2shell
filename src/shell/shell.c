@@ -17,6 +17,7 @@
 #define INPUT_LEN 256
 #define DIR_LEN 128
 #define ARG_LEN 128
+#define MAX_PATHS 512
 
 #define CMD_SEPARATOR " "
 
@@ -77,7 +78,7 @@ runShell()
 	strncat(initialDir, "/", DIR_LEN);
 	cdShell(initialDir);
 
-	char *splitPaths[500] = {0};
+	char *splitPaths[MAX_PATHS] = {0};
 	size_t pathsCount = 0;
 	static size_t const maxTokenCount = sizeof(splitPaths) / sizeof(splitPaths[0]);
 	for (char* path = strtok(pathEnv, PATH_SPLIT_CHAR); path != NULL && pathsCount != maxTokenCount; path = strtok(NULL, PATH_SPLIT_CHAR))
@@ -223,7 +224,9 @@ runShell()
 		strncpy(localQueryPath, currentDir, DIR_LEN);
 		strncat(localQueryPath, command, DIR_LEN);
 
-		char *expandedLocalPath = expandPath(localQueryPath, currentUser, false);
+		char expandedLocalPath[1024];
+		strncpy(expandedLocalPath, localQueryPath, 1024);
+		expandPath(expandedLocalPath, currentUser, false);
 
 		if (!access(localQueryPath, F_OK))
 		{
@@ -250,12 +253,15 @@ runShell()
 		{
 			for (int i = 0; i < pathsCount; i++)
 			{
-				char *expandedQueriedPath = expandPath(splitPaths[i], currentUser, true);
+				char expandedQueriedPath[1024] = {};
+				strncpy(expandedQueriedPath, splitPaths[i], sizeof(expandedQueriedPath));
+				expandPath(expandedQueriedPath, currentUser, true);
+
 				char queriedPath[DIR_LEN] = {};
 				strncpy(queriedPath, expandedQueriedPath, DIR_LEN);
 				strncat(queriedPath, command, DIR_LEN);
 
-				if (access(queriedPath, F_OK) == 0)
+				if (!access(queriedPath, F_OK))
 				{
 					lastCommandSuccess = true;
 
