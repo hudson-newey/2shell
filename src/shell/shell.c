@@ -167,9 +167,24 @@ runShell()
 				strncat(errorMsg, ": No such file or directory", 256);
 				printError("cd", errorMsg);
 			}
-
-			char *newPathValue = getenv("PWD");
-			getcwd(currentDir, DIR_LEN);
+			else
+			{
+				// Note: Not updating the directory here is not in line with
+				// the behavior of other shells.
+				// In other shells, if the directory that you were in gets
+				// deleted and a cd commands fails, your working directory will
+				// be updated.
+				//
+				// However, changing the working directory is on a failure is
+				// "expensive" and doesn't seem to provide much benefit for a
+				// command line; not scripting shell (which 2sh is targeting).
+				//
+				// Therefore, to make the shell slightly faster in this use case
+				// I have purposely broken compatibility with shells like bash
+				// and zsh.
+				char *newPathValue = getenv("PWD");
+				getcwd(currentDir, DIR_LEN);
+			}
 
 			// Because we short-circut the cd command so that we
 			// don't end up searching PATH, we do not hit the
@@ -190,6 +205,7 @@ runShell()
 			{
 				lastCommandSuccess = false;
 				add_history(unmodifiedInput);
+				printf("3\n");
 				free(input);
 				continue;
 			}
@@ -252,8 +268,6 @@ runShell()
 			}
 
 			foundCommand = true;
-
-			free(input);
 			break;
 		}
 		else
@@ -287,8 +301,6 @@ runShell()
 					}
 
 					foundCommand = true;
-
-					free(input);
 					break;
 				}
 			}
