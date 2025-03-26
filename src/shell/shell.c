@@ -111,6 +111,7 @@ runShell()
 		char *input = readline(bufferlinePrompt);
 		if (!strcmp(input, ""))
 		{
+			free(input);
 			continue;
 		}
 
@@ -146,6 +147,7 @@ runShell()
 			// I replicate this behavior in my shell
 			if (argCount < 2) {
 				add_history(unmodifiedInput);
+				free(input);
 				lastCommandSuccess = false;
 				continue;
 			}
@@ -179,6 +181,7 @@ runShell()
 			// command the user requested is executed as soon as
 			// possible.
 			add_history(unmodifiedInput);
+			free(input);
 			continue;
 		}
 		else if (!strncmp(command, "export", INPUT_LEN))
@@ -187,6 +190,7 @@ runShell()
 			{
 				lastCommandSuccess = false;
 				add_history(unmodifiedInput);
+				free(input);
 				continue;
 			}
 
@@ -201,6 +205,7 @@ runShell()
 			setenv(envVarName, envVarValue, 1);
 
 			add_history(unmodifiedInput);
+			free(input);
 			continue;
 		}
 
@@ -247,6 +252,8 @@ runShell()
 			}
 
 			foundCommand = true;
+
+			free(input);
 			break;
 		}
 		else
@@ -280,9 +287,17 @@ runShell()
 					}
 
 					foundCommand = true;
+
+					free(input);
 					break;
 				}
 			}
+		}
+
+		if (!foundCommand)
+		{
+			printCommandNotFoundError(command);
+			lastCommandSuccess = false;
 		}
 
 		// we could add_history first, to de-duplicate logic
@@ -291,11 +306,13 @@ runShell()
 		// provide to the user as soon as they press the enter key
 		add_history(unmodifiedInput);
 
-		if (!foundCommand)
-		{
-			printCommandNotFoundError(command);
-			lastCommandSuccess = false;
-		}
+		// Same with add_history, I could de-duplicate the free() logic by
+		// freeing the input at the top of the while loop.
+		// However, freeing heap memory is a relatively expensive operation
+		// and I want to print output to the screen as soon as possible.
+		// Therefore, I free the input last so that the user gets feedback
+		// as soon as possible.
+		free(input);
 	}
 
 	return 0;
