@@ -22,10 +22,12 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -std=gnu11")
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_executable(2sh src/main.c)
 target_link_libraries(2sh PRIVATE readline)
 target_link_libraries(2sh PRIVATE sds)
+
+install(TARGETS 2sh RUNTIME DESTINATION /usr/local/bin)

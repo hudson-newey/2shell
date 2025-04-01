@@ -8,15 +8,16 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "sds.h"
+
 #include "paths.c"
 #include "errors.c"
 
 #include "../built-ins/exit.c"
 #include "../built-ins/cd.c"
 
-#define INPUT_LEN 256
-#define DIR_LEN 128
 #define ARG_LEN 128
+#define BUFFER_LINE_LEN 256
 #define MAX_PATHS 512
 
 #define CMD_SEPARATOR " "
@@ -39,7 +40,7 @@ static volatile int sigint_received = 0;
 // it is used to prevent the shell from exiting
 // when the user presses ctrl+c in the interactive terminal
 void
-intHandler(int dummy)
+intHandler()
 {
 	sigint_received = 1;
 	rl_replace_line("", 0);
@@ -49,7 +50,7 @@ intHandler(int dummy)
 int
 runArgsCommand(char *command)
 {
-	if (strncmp(command, "exit", INPUT_LEN) == 0)
+	if (!strncmp(command, "exit", strlen("exit")))
 	{
 		exitShell();
 	}
@@ -72,10 +73,10 @@ runShell()
 	setenv("PATH", pathEnv, true);
 	char *currentUser = getenv(USER_ENV_VAR);
 
-	char initialDir[DIR_LEN];
-	strncpy(initialDir, "/home/", DIR_LEN);
-	strncat(initialDir, currentUser, DIR_LEN);
-	strncat(initialDir, "/", DIR_LEN);
+	char initialDir[sizeof("/home/") + sizeof(currentUser) + sizeof("/")];
+	strncpy(initialDir, "/home/", sizeof(initialDir));
+	strncat(initialDir, currentUser, sizeof(initialDir));
+	strncat(initialDir, "/", sizeof(initialDir));
 	cdShell(initialDir);
 
 	char *splitPaths[MAX_PATHS] = {0};
@@ -86,26 +87,25 @@ runShell()
 	    splitPaths[pathsCount++] = path;
 	}
 
-	char currentDir[DIR_LEN] = DEFAULT_CWD;
-	char input[INPUT_LEN];
+	sds currentDir = sdsnew(DEFAULT_CWD);
 
 	bool lastCommandSuccess = true;
 
 	printf("\e[1;1H\e[2J");
 	while (true)
 	{
-		char bufferlinePrompt[INPUT_LEN];
-		strncpy(bufferlinePrompt, "\x1b[36m", INPUT_LEN);
-		strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), INPUT_LEN);
-		strncat(bufferlinePrompt, "\x1b[0m", INPUT_LEN);
+		char bufferlinePrompt[BUFFER_LINE_LEN];
+		strncpy(bufferlinePrompt, "\x1b[36m", sizeof(bufferlinePrompt));
+		strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), sizeof(bufferlinePrompt));
+		strncat(bufferlinePrompt, "\x1b[0m", sizeof(bufferlinePrompt));
 
 		if (lastCommandSuccess)
 		{
-			strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), INPUT_LEN);
+			strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), sizeof(bufferlinePrompt));
 		}
 		else
 		{
-			strncat(bufferlinePrompt, FAILURE_RED(" > "), INPUT_LEN);
+			strncat(bufferlinePrompt, FAILURE_RED(" > "), sizeof(bufferlinePrompt));
 		}
 
 		char *input = readline(bufferlinePrompt);
@@ -116,14 +116,14 @@ runShell()
 		}
 
 		input[strcspn(input, "\n")] = 0;
-		char unmodifiedInput[INPUT_LEN];
-		strncpy(unmodifiedInput, input, INPUT_LEN);
+		char unmodifiedInput[strlen(input)];
+		strncpy(unmodifiedInput, input, 255);
 
 		// this modified input is used to have inbuilt aliases
 		// e.g. ls is mapped to ls --color
 		// these inbuilt mappings are typically just visual
-		char modifiedInput[INPUT_LEN];
-		strncpy(modifiedInput, input, INPUT_LEN);
+		char modifiedInput[sizeof(input) + 255];
+		strncpy(modifiedInput, input, sizeof(modifiedInput));
 
 		char *userCommand[ARG_LEN] = {0};
 		size_t argCount = 0;
@@ -136,11 +136,11 @@ runShell()
 		char *command = userCommand[0];
 		bool foundCommand = false;
 
-		if (!strncmp(command, "exit", INPUT_LEN) || !strncmp(command, "q", INPUT_LEN))
+		if (!strncmp(command, "exit", strlen("exit")) || !strncmp(command, "q", strlen("q")))
 		{
 			exitShell();
 		}
-		else if (!strncmp(command, "cd", INPUT_LEN))
+		else if (!strncmp(command, "cd", strlen("cd")))
 		{
 			// for some reason, the bash behavior is to not throw
 			// an error if the cd command is run without a path
@@ -152,12 +152,10 @@ runShell()
 				continue;
 			}
 
-			strncpy(currentDir, userCommand[1], DIR_LEN);
-
 			// using the chdir() function communicates to
 			// programs like "ls" and "pwd" what directory
 			// we are currently looking at
-			int respCode = cdShell(currentDir);
+			int respCode = cdShell(userCommand[1]);
 			lastCommandSuccess = !respCode;
 
 			if (respCode == -1)
@@ -182,8 +180,12 @@ runShell()
 				// Therefore, to make the shell slightly faster in this use case
 				// I have purposely broken compatibility with shells like bash
 				// and zsh.
-				char *newPathValue = getenv("PWD");
-				getcwd(currentDir, DIR_LEN);
+				// char *newPathValue = getenv("PWD");
+
+				char newDir[255];
+				getcwd(newDir, sizeof(newDir));
+
+				currentDir = sdscpy(currentDir, newDir);
 			}
 
 			// Because we short-circut the cd command so that we
@@ -199,7 +201,7 @@ runShell()
 			free(input);
 			continue;
 		}
-		else if (!strncmp(command, "export", INPUT_LEN))
+		else if (!strncmp(command, "export", strlen("export")))
 		{
 			if (argCount < 3)
 			{
@@ -225,13 +227,13 @@ runShell()
 			continue;
 		}
 
-		if (!strncmp(command, "ls", INPUT_LEN))
+		if (!strncmp(command, "ls", strlen("ls")))
 		{
-			strncat(modifiedInput, " --color", INPUT_LEN);
+			strncat(modifiedInput, " --color", sizeof(modifiedInput));
 		}
-		else if (!strncmp(command, "grep", INPUT_LEN))
+		else if (!strncmp(command, "grep", strlen("grep")))
 		{
-			strncat(modifiedInput, " --color", INPUT_LEN);
+			strncat(modifiedInput, " --color", sizeof(modifiedInput));
 		}
 
 		// I think that the local path is the most likely to contain
@@ -241,9 +243,9 @@ runShell()
 		//
 		// TODO: This ordering should probably be conditional on if
 		// the command starts with a ./
-		char localQueryPath[DIR_LEN];
-		strncpy(localQueryPath, currentDir, DIR_LEN);
-		strncat(localQueryPath, command, DIR_LEN);
+		char localQueryPath[sizeof(currentDir) + sizeof(command)];
+		strncpy(localQueryPath, currentDir, sizeof(localQueryPath));
+		strncat(localQueryPath, command, sizeof(localQueryPath));
 
 		char expandedLocalPath[1024];
 		strncpy(expandedLocalPath, localQueryPath, 1024);
@@ -253,11 +255,7 @@ runShell()
 		{
 			lastCommandSuccess = true;
 
-			char executedCommand[INPUT_LEN];
-			strncpy(executedCommand, currentDir, INPUT_LEN);
-			strncpy(executedCommand, modifiedInput, INPUT_LEN);
-
-			int status =  system(executedCommand);
+			int status =  system(modifiedInput);
 			if (status != 0)
 			{
 				char errorMessage[1028];
@@ -272,23 +270,23 @@ runShell()
 		}
 		else
 		{
-			for (int i = 0; i < pathsCount; i++)
+			for (unsigned int i = 0; i < pathsCount; i++)
 			{
 				char expandedQueriedPath[1024] = {};
 				strncpy(expandedQueriedPath, splitPaths[i], sizeof(expandedQueriedPath));
 				expandPath(expandedQueriedPath, currentUser, true);
 
-				char queriedPath[DIR_LEN] = {};
-				strncpy(queriedPath, expandedQueriedPath, DIR_LEN);
-				strncat(queriedPath, command, DIR_LEN);
+				char queriedPath[sizeof(expandedQueriedPath) + sizeof(command)] = {};
+				strncpy(queriedPath, expandedQueriedPath, sizeof(queriedPath));
+				strncat(queriedPath, command, sizeof(queriedPath));
 
 				if (!access(queriedPath, F_OK))
 				{
 					lastCommandSuccess = true;
 
-					char executedCommand[INPUT_LEN];
-					strncpy(executedCommand, expandedQueriedPath, INPUT_LEN);
-					strncat(executedCommand, modifiedInput, INPUT_LEN);
+					char executedCommand[sizeof(expandedQueriedPath) + sizeof(modifiedInput)];
+					strncpy(executedCommand, expandedQueriedPath, sizeof(executedCommand));
+					strncat(executedCommand, modifiedInput, sizeof(executedCommand));
 
 					int status = system(executedCommand);
 					if (status != 0)
@@ -326,6 +324,12 @@ runShell()
 		// as soon as possible.
 		free(input);
 	}
+
+	// Do not bother freeing the sds currentDir variable because this is the
+	// end of the program, and the operating system will take care of
+	// reclaiming the memory once we terminate.
+	// Not freeing the memory here makes the program slightly faster when
+	// exiting.
 
 	return 0;
 }
