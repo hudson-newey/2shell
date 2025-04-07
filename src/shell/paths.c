@@ -62,8 +62,8 @@ expandPath(char *path, char *currentUser, bool suffixSlash)
 	}
 
 	char homePath[128] = "/home/";
-	strncat(homePath, currentUser, 128);
-	strncat(homePath, "/", 128);
+	strcat(homePath, currentUser);
+	strcat(homePath, "/");
 
 	strReplace(path, "~/", homePath);
 }
@@ -72,15 +72,15 @@ char*
 shortenPath(char *path, char *currentUser)
 {
 	char homePath[128] = "/home/";
-	strncat(homePath, currentUser, 128);
+	strcat(homePath, currentUser);
 
 	// TODO: remove this special case
-	if (!strncmp(homePath, path, 128))
+	if (!strncmp(homePath, path, strlen(path)))
 	{
 		return "~";
 	}
 
-	strncat(homePath, "/", 128);
+	strcat(homePath, "/");
 
 	strReplace(path, homePath, "~/");
 

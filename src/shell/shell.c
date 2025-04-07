@@ -8,7 +8,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "sds.h"
+/* #include "sds.h" */
 
 #include "paths.c"
 #include "errors.c"
@@ -33,6 +33,9 @@
 #define COLOR_RESET "\x1b[0m"
 #define FAILURE_RED(string) "\x1b[31m" string COLOR_RESET
 #define SUCCESS_GREEN(string) "\x1b[32m" string COLOR_RESET
+
+#define SUCCESS_PROMPT SUCCESS_GREEN(" > ")
+#define FAILURE_PROMPT FAILURE_RED(" > ")
 
 static volatile int sigint_received = 0;
 
@@ -73,10 +76,10 @@ runShell()
 	setenv("PATH", pathEnv, true);
 	char *currentUser = getenv(USER_ENV_VAR);
 
-	char initialDir[sizeof("/home/") + sizeof(currentUser) + sizeof("/")];
-	strncpy(initialDir, "/home/", sizeof(initialDir));
-	strncat(initialDir, currentUser, sizeof(initialDir));
-	strncat(initialDir, "/", sizeof(initialDir));
+	char initialDir[sizeof("/home/") + sizeof(currentUser) + sizeof("/") + 1];
+	strlcpy(initialDir, "/home/", strlen(initialDir) + strlen("/home/") + 1);
+	strlcat(initialDir, currentUser, strlen(initialDir) + strlen(currentUser) + 1);
+	strlcat(initialDir, "/", strlen(initialDir) + strlen("/") + 1);
 	cdShell(initialDir);
 
 	char *splitPaths[MAX_PATHS] = {0};
@@ -87,7 +90,7 @@ runShell()
 	    splitPaths[pathsCount++] = path;
 	}
 
-	sds currentDir = sdsnew(DEFAULT_CWD);
+	char currentDir[1024] = DEFAULT_CWD;
 
 	bool lastCommandSuccess = true;
 
@@ -96,16 +99,16 @@ runShell()
 	{
 		char bufferlinePrompt[BUFFER_LINE_LEN];
 		strncpy(bufferlinePrompt, "\x1b[36m", sizeof(bufferlinePrompt));
-		strncat(bufferlinePrompt, shortenPath(currentDir, currentUser), sizeof(bufferlinePrompt));
-		strncat(bufferlinePrompt, "\x1b[0m", sizeof(bufferlinePrompt));
+		strcat(bufferlinePrompt, shortenPath(currentDir, currentUser));
+		strncat(bufferlinePrompt, "\x1b[0m", strlen(bufferlinePrompt));
 
 		if (lastCommandSuccess)
 		{
-			strncat(bufferlinePrompt, SUCCESS_GREEN(" > "), sizeof(bufferlinePrompt));
+			strcat(bufferlinePrompt, SUCCESS_PROMPT);
 		}
 		else
 		{
-			strncat(bufferlinePrompt, FAILURE_RED(" > "), sizeof(bufferlinePrompt));
+			strcat(bufferlinePrompt, FAILURE_PROMPT);
 		}
 
 		char *input = readline(bufferlinePrompt);
@@ -117,13 +120,13 @@ runShell()
 
 		input[strcspn(input, "\n")] = 0;
 		char unmodifiedInput[strlen(input)];
-		strncpy(unmodifiedInput, input, 255);
+		strncpy(unmodifiedInput, input, strlen(input));
 
 		// this modified input is used to have inbuilt aliases
 		// e.g. ls is mapped to ls --color
 		// these inbuilt mappings are typically just visual
 		char modifiedInput[sizeof(input) + 255];
-		strncpy(modifiedInput, input, sizeof(modifiedInput));
+		strlcpy(modifiedInput, input, strlen(modifiedInput) + strlen(input) + 1);
 
 		char *userCommand[ARG_LEN] = {0};
 		size_t argCount = 0;
@@ -161,8 +164,8 @@ runShell()
 			if (respCode == -1)
 			{
 				char errorMsg[256];
-				strncpy(errorMsg, userCommand[1], 256);
-				strncat(errorMsg, ": No such file or directory", 256);
+				strcpy(errorMsg, userCommand[1]);
+				strcat(errorMsg, ": No such file or directory");
 				printError("cd", errorMsg);
 			}
 			else
@@ -185,7 +188,7 @@ runShell()
 				char newDir[255];
 				getcwd(newDir, sizeof(newDir));
 
-				currentDir = sdscpy(currentDir, newDir);
+				strlcpy(currentDir, newDir, strlen(currentDir) + strlen(newDir) + 1);
 			}
 
 			// Because we short-circut the cd command so that we
@@ -229,11 +232,11 @@ runShell()
 
 		if (!strncmp(command, "ls", strlen("ls")))
 		{
-			strncat(modifiedInput, " --color", sizeof(modifiedInput));
+			strlcat(modifiedInput, " --color", strlen(modifiedInput) + strlen(" --color") + 1);
 		}
 		else if (!strncmp(command, "grep", strlen("grep")))
 		{
-			strncat(modifiedInput, " --color", sizeof(modifiedInput));
+			strlcat(modifiedInput, " --color", strlen(modifiedInput) + strlen(" --color") + 1);
 		}
 
 		// I think that the local path is the most likely to contain
@@ -244,11 +247,11 @@ runShell()
 		// TODO: This ordering should probably be conditional on if
 		// the command starts with a ./
 		char localQueryPath[sizeof(currentDir) + sizeof(command)];
-		strncpy(localQueryPath, currentDir, sizeof(localQueryPath));
-		strncat(localQueryPath, command, sizeof(localQueryPath));
+		strlcpy(localQueryPath, currentDir, strlen(localQueryPath) + strlen(currentDir) + 1);
+		strlcat(localQueryPath, command, strlen(localQueryPath) + strlen(command) + 1);
 
 		char expandedLocalPath[1024];
-		strncpy(expandedLocalPath, localQueryPath, 1024);
+		strcpy(expandedLocalPath, localQueryPath);
 		expandPath(expandedLocalPath, currentUser, false);
 
 		if (!access(localQueryPath, F_OK))
@@ -273,20 +276,20 @@ runShell()
 			for (unsigned int i = 0; i < pathsCount; i++)
 			{
 				char expandedQueriedPath[1024] = {};
-				strncpy(expandedQueriedPath, splitPaths[i], sizeof(expandedQueriedPath));
+				strlcpy(expandedQueriedPath, splitPaths[i], strlen(expandedQueriedPath) + strlen(splitPaths[i]) + 1);
 				expandPath(expandedQueriedPath, currentUser, true);
 
-				char queriedPath[sizeof(expandedQueriedPath) + sizeof(command)] = {};
-				strncpy(queriedPath, expandedQueriedPath, sizeof(queriedPath));
-				strncat(queriedPath, command, sizeof(queriedPath));
+				char queriedPath[strlen(expandedQueriedPath) + strlen(command) + 1] = {};
+				strlcpy(queriedPath, expandedQueriedPath, strlen(queriedPath) + strlen(expandedQueriedPath) + 1);
+				strlcat(queriedPath, command, strlen(queriedPath) + strlen(command) + 1);
 
 				if (!access(queriedPath, F_OK))
 				{
 					lastCommandSuccess = true;
 
 					char executedCommand[sizeof(expandedQueriedPath) + sizeof(modifiedInput)];
-					strncpy(executedCommand, expandedQueriedPath, sizeof(executedCommand));
-					strncat(executedCommand, modifiedInput, sizeof(executedCommand));
+					strlcpy(executedCommand, expandedQueriedPath, strlen(executedCommand) + strlen(expandedQueriedPath) + 1);
+					strlcat(executedCommand, modifiedInput, strlen(executedCommand) + strlen(modifiedInput) + 1);
 
 					int status = system(executedCommand);
 					if (status != 0)
