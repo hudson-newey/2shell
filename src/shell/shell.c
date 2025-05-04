@@ -119,8 +119,8 @@ runShell()
 		}
 
 		input[strcspn(input, "\n")] = 0;
-		char unmodifiedInput[strlen(input)];
-		strncpy(unmodifiedInput, input, strlen(input));
+		char unmodifiedInput[strlen(input) + 1];
+		strncpy(unmodifiedInput, input, strlen(input) + 1);
 
 		// this modified input is used to have inbuilt aliases
 		// e.g. ls is mapped to ls --color
