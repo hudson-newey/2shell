@@ -26,7 +26,18 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -std=gnu11")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-add_executable(2sh src/main.c)
+add_executable(
+  2sh
+  src/main.c
+  src/shell/shell.c
+  src/shell/errors.c
+  src/shell/paths.c
+  src/built-ins/cd.c
+  src/built-ins/exit.c
+)
+
+target_include_directories(2sh PUBLIC src)
+
 target_link_libraries(2sh PRIVATE readline)
 target_link_libraries(2sh PRIVATE sds)
 

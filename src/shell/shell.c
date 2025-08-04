@@ -10,11 +10,11 @@
 
 /* #include "sds.h" */
 
-#include "paths.c"
-#include "errors.c"
+#include "paths.h"
+#include "errors.h"
 
-#include "../built-ins/exit.c"
-#include "../built-ins/cd.c"
+#include "../built-ins/exit.h"
+#include "../built-ins/cd.h"
 
 #define ARG_LEN 128
 #define BUFFER_LINE_LEN 256
